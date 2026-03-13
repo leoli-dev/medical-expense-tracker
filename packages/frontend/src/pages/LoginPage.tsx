@@ -58,6 +58,7 @@ export function LoginPage() {
           <Input
             label="Username"
             id="username"
+            name="username"
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -67,6 +68,7 @@ export function LoginPage() {
           <Input
             label="Password"
             id="password"
+            name="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
