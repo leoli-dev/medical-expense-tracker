@@ -66,7 +66,7 @@ export function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4">
+      <div className="space-y-4" style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}>
         <YearSelector year={year} onChange={setYear} />
 
         <ExpenseSummary totals={totals} />
@@ -86,7 +86,8 @@ export function DashboardPage() {
       {/* Floating Add Button */}
       <button
         onClick={handleAdd}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-primary-700 text-white rounded-full shadow-lg hover:bg-primary-800 active:bg-primary-900 transition-colors flex items-center justify-center"
+        className="fixed right-6 w-14 h-14 bg-primary-700 text-white rounded-full shadow-lg hover:bg-primary-800 active:bg-primary-900 transition-colors flex items-center justify-center"
+        style={{ bottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))" }}
       >
         <svg
           className="w-7 h-7"
