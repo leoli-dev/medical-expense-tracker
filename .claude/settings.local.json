@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(node -e \":*)",
+      "Bash(npx -w packages/backend drizzle-kit push)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(timeout 5 npx tsx src/index.ts)",
+      "Bash(npx tsx:*)"
+    ]
+  }
+}

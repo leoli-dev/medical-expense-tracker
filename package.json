@@ -1,0 +1,19 @@
+{
+  "name": "medical-expense-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/backend",
+    "packages/frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w packages/backend\" \"npm run dev -w packages/frontend\"",
+    "build": "npm run build -w packages/backend && npm run build -w packages/frontend",
+    "db:push": "npm run db:push -w packages/backend",
+    "create-user": "npm run create-user -w packages/backend --"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  }
+}
