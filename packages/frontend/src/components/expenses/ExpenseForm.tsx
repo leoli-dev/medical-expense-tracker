@@ -169,11 +169,11 @@ export function ExpenseForm({
                   {receiptPath ? "Replace receipt" : "Scan Receipt"}
                 </span>
                 <span className="text-xs text-gray-400">
-                  JPG, PNG, or PDF
+                  JPG, PNG, HEIC, or PDF
                 </span>
                 <input
                   type="file"
-                  accept="image/jpeg,image/png,application/pdf"
+                  accept="image/jpeg,image/png,image/heic,image/heif,application/pdf"
                   capture="environment"
                   onChange={handleReceiptUpload}
                   className="hidden"

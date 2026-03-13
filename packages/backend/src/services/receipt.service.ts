@@ -10,14 +10,19 @@ export async function processReceipt(filePath: string, mimeType: string) {
 
   if (mimeType === "application/pdf") {
     // For PDF, read the raw buffer - the AI provider can handle it
-    // In the future, we could convert PDF pages to images
     buffer = fs.readFileSync(filePath);
+  } else if (mimeType === "image/heic" || mimeType === "image/heif") {
+    // Convert HEIC/HEIF to JPEG for AI provider compatibility
+    buffer = await sharp(filePath)
+      .resize(2048, 2048, { fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+    processedMimeType = "image/jpeg";
   } else {
-    // For images, resize to reduce API cost
+    // For JPEG/PNG, resize to reduce API cost
     buffer = await sharp(filePath)
       .resize(2048, 2048, { fit: "inside", withoutEnlargement: true })
       .toBuffer();
-    processedMimeType = mimeType;
   }
 
   const provider = createAIProvider();
