@@ -1,8 +1,15 @@
 import fs from "fs";
 import path from "path";
 import sharp from "sharp";
+import heicConvert from "heic-convert";
 import { createAIProvider } from "../ai/provider.factory.js";
 import { config } from "../config.js";
+
+function isHeic(filePath: string, mimeType: string): boolean {
+  if (mimeType === "image/heic" || mimeType === "image/heif") return true;
+  const ext = path.extname(filePath).toLowerCase();
+  return ext === ".heic" || ext === ".heif";
+}
 
 export async function processReceipt(filePath: string, mimeType: string) {
   let buffer: Buffer;
@@ -11,11 +18,16 @@ export async function processReceipt(filePath: string, mimeType: string) {
   if (mimeType === "application/pdf") {
     // For PDF, read the raw buffer - the AI provider can handle it
     buffer = fs.readFileSync(filePath);
-  } else if (mimeType === "image/heic" || mimeType === "image/heif") {
-    // Convert HEIC/HEIF to JPEG for AI provider compatibility
-    buffer = await sharp(filePath)
+  } else if (isHeic(filePath, mimeType)) {
+    // Convert HEIC/HEIF to JPEG, then resize
+    const heicBuffer = fs.readFileSync(filePath);
+    const jpegBuffer = await heicConvert({
+      buffer: new Uint8Array(heicBuffer) as unknown as ArrayBuffer,
+      format: "JPEG",
+      quality: 0.9,
+    });
+    buffer = await sharp(Buffer.from(jpegBuffer))
       .resize(2048, 2048, { fit: "inside", withoutEnlargement: true })
-      .jpeg({ quality: 90 })
       .toBuffer();
     processedMimeType = "image/jpeg";
   } else {

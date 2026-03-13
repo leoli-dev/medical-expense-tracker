@@ -9,7 +9,12 @@
       "Bash(timeout 5 npx tsx src/index.ts)",
       "Bash(npx tsx:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(node -e \"const sharp = require\\(''sharp''\\); console.log\\(sharp.format\\)\")",
+      "Bash(node -e \"import\\(''sharp''\\).then\\(s => console.log\\(JSON.stringify\\(Object.keys\\(s.default.format\\), null, 2\\)\\)\\)\")",
+      "Bash(apt list:*)",
+      "Bash(node -e \"import\\(''heic-convert''\\).then\\(m => console.log\\(typeof m.default\\)\\)\")",
+      "Bash(sqlite3 /home/leo/code/medical-expense-tracker/packages/backend/data/medical-expenses.db \"SELECT * FROM expenses;\")"
     ]
   }
 }
