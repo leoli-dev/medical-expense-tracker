@@ -37,6 +37,7 @@ export function ExpenseForm({
   const [receiptPath, setReceiptPath] = useState<string | null>(null);
   const [receiptBlobUrl, setReceiptBlobUrl] = useState<string | null>(null);
   const [receiptIsPdf, setReceiptIsPdf] = useState(false);
+  const [receiptFetchError, setReceiptFetchError] = useState<null | "missing" | "forbidden" | "error">(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +79,7 @@ export function ExpenseForm({
     }
     setReceiptBlobUrl(null);
     setReceiptIsPdf(false);
+    setReceiptFetchError(null);
 
     if (!receiptPath) return;
 
@@ -85,19 +87,22 @@ export function ExpenseForm({
     fetch(`/api/receipts/file?path=${encodeURIComponent(receiptPath)}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load receipt");
+      .then(async (res) => {
+        if (!res.ok) {
+          setReceiptFetchError(
+            res.status === 404 ? "missing" : res.status === 403 ? "forbidden" : "error"
+          );
+          return;
+        }
         const contentType = res.headers.get("content-type") || "";
         setReceiptIsPdf(contentType.includes("pdf"));
-        return res.blob();
-      })
-      .then((blob) => {
+        const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         blobUrlRef.current = url;
         setReceiptBlobUrl(url);
       })
       .catch(() => {
-        // Receipt file missing or inaccessible — silently ignore
+        setReceiptFetchError("error");
       });
 
     return () => {
@@ -242,8 +247,14 @@ export function ExpenseForm({
                   className="hidden"
                 />
               </label>
-              {receiptPath && !receiptBlobUrl && (
-                <p className="text-xs text-green-600 mt-2">Receipt attached</p>
+              {receiptFetchError === "missing" && (
+                <p className="text-xs text-amber-600 mt-2">Receipt file missing on server. Please re-upload.</p>
+              )}
+              {receiptFetchError === "forbidden" && (
+                <p className="text-xs text-gray-500 mt-2">Receipt could not be accessed.</p>
+              )}
+              {receiptFetchError === "error" && (
+                <p className="text-xs text-red-500 mt-2">Failed to load receipt.</p>
               )}
             </>
           )}
