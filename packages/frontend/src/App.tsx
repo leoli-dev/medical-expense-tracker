@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { Spinner } from "./components/ui/Spinner";
+import { SWUpdateToast } from "./components/pwa/SWUpdateToast";
 import type { ReactNode } from "react";
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -44,6 +45,7 @@ function PublicRoute({ children }: { children: ReactNode }) {
 export default function App() {
   return (
     <AuthProvider>
+      <SWUpdateToast />
       <BrowserRouter>
         <Routes>
           <Route
