@@ -13,5 +13,6 @@ export const config = {
   openaiApiKey: process.env.OPENAI_API_KEY || "",
   aiProvider: process.env.AI_PROVIDER || "openai",
   databasePath: process.env.DATABASE_PATH || "./data/medical-expenses.db",
+  uploadsDir: path.resolve(__dirname, "../uploads"),
   maxFileSize: 10 * 1024 * 1024, // 10MB
 };

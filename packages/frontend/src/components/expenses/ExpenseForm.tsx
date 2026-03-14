@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Expense } from "../../types";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Modal } from "../ui/Modal";
 import { Spinner } from "../ui/Spinner";
 import { useReceiptUpload } from "../../hooks/useReceiptUpload";
+import { getToken } from "../../api/client";
 
 interface ExpenseFormProps {
   open: boolean;
@@ -34,9 +35,12 @@ export function ExpenseForm({
   const [claimDate, setClaimDate] = useState("");
   const [reimbursementAmount, setReimbursementAmount] = useState("");
   const [receiptPath, setReceiptPath] = useState<string | null>(null);
+  const [receiptBlobUrl, setReceiptBlobUrl] = useState<string | null>(null);
+  const [receiptIsPdf, setReceiptIsPdf] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
 
   const { upload, uploading, error: uploadError } = useReceiptUpload();
 
@@ -64,6 +68,45 @@ export function ExpenseForm({
       setError(null);
     }
   }, [open, expense]);
+
+  // Fetch receipt blob for preview when editing an expense with a stored receipt
+  useEffect(() => {
+    // Revoke previous blob URL to avoid memory leaks
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+    setReceiptBlobUrl(null);
+    setReceiptIsPdf(false);
+
+    if (!receiptPath) return;
+
+    const token = getToken();
+    fetch(`/api/receipts/file?path=${encodeURIComponent(receiptPath)}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load receipt");
+        const contentType = res.headers.get("content-type") || "";
+        setReceiptIsPdf(contentType.includes("pdf"));
+        return res.blob();
+      })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        blobUrlRef.current = url;
+        setReceiptBlobUrl(url);
+      })
+      .catch(() => {
+        // Receipt file missing or inaccessible — silently ignore
+      });
+
+    return () => {
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+    };
+  }, [receiptPath]);
 
   const handleReceiptUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
@@ -145,6 +188,26 @@ export function ExpenseForm({
             </div>
           ) : (
             <>
+              {receiptBlobUrl && !receiptIsPdf && (
+                <img
+                  src={receiptBlobUrl}
+                  alt="Receipt preview"
+                  className="max-h-48 mx-auto rounded-lg mb-3 object-contain"
+                />
+              )}
+              {receiptBlobUrl && receiptIsPdf && (
+                <a
+                  href={receiptBlobUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm text-primary-700 font-medium mb-3"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  View PDF receipt
+                </a>
+              )}
               <label className="cursor-pointer inline-flex flex-col items-center gap-1">
                 <svg
                   className="w-8 h-8 text-gray-400"
@@ -179,7 +242,7 @@ export function ExpenseForm({
                   className="hidden"
                 />
               </label>
-              {receiptPath && (
+              {receiptPath && !receiptBlobUrl && (
                 <p className="text-xs text-green-600 mt-2">Receipt attached</p>
               )}
             </>

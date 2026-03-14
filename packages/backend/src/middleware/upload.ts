@@ -1,7 +1,8 @@
 import multer from "multer";
 import path from "path";
-import os from "os";
+import fs from "fs";
 import { config } from "../config.js";
+import { Request } from "express";
 
 const ALLOWED_MIMES = [
   "image/jpeg",
@@ -21,8 +22,11 @@ function isAllowed(file: Express.Multer.File): boolean {
 }
 
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, os.tmpdir());
+  destination: (req: Request, _file, cb) => {
+    const userId = req.user?.userId || "unknown";
+    const dir = path.join(config.uploadsDir, String(userId));
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
   },
   filename: (_req, file, cb) => {
     const timestamp = Date.now();
