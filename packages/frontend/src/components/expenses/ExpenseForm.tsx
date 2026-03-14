@@ -37,11 +37,13 @@ export function ExpenseForm({
   const [receiptPath, setReceiptPath] = useState<string | null>(null);
   const [receiptBlobUrl, setReceiptBlobUrl] = useState<string | null>(null);
   const [receiptIsPdf, setReceiptIsPdf] = useState(false);
+  const [showReceiptZoom, setShowReceiptZoom] = useState(false);
   const [receiptFetchError, setReceiptFetchError] = useState<null | "missing" | "forbidden" | "error">(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const blobUrlRef = useRef<string | null>(null);
+  const zoomOverlayRef = useRef<HTMLDivElement | null>(null);
 
   const { upload, uploading, error: uploadError } = useReceiptUpload();
 
@@ -79,13 +81,16 @@ export function ExpenseForm({
     }
     setReceiptBlobUrl(null);
     setReceiptIsPdf(false);
+    setShowReceiptZoom(false);
     setReceiptFetchError(null);
 
     if (!receiptPath) return;
 
+    const controller = new AbortController();
     const token = getToken();
     fetch(`/api/receipts/file?path=${encodeURIComponent(receiptPath)}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
+      signal: controller.signal,
     })
       .then(async (res) => {
         if (!res.ok) {
@@ -101,17 +106,24 @@ export function ExpenseForm({
         blobUrlRef.current = url;
         setReceiptBlobUrl(url);
       })
-      .catch(() => {
-        setReceiptFetchError("error");
+      .catch((err) => {
+        if (err.name !== "AbortError") setReceiptFetchError("error");
       });
 
     return () => {
+      controller.abort();
       if (blobUrlRef.current) {
         URL.revokeObjectURL(blobUrlRef.current);
         blobUrlRef.current = null;
       }
     };
   }, [receiptPath]);
+
+  useEffect(() => {
+    if (showReceiptZoom) {
+      zoomOverlayRef.current?.focus();
+    }
+  }, [showReceiptZoom]);
 
   const handleReceiptUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
@@ -181,6 +193,7 @@ export function ExpenseForm({
       onClose={onClose}
       title={expense ? "Edit Expense" : "Add Expense"}
     >
+      <>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Receipt Upload */}
         <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
@@ -197,7 +210,8 @@ export function ExpenseForm({
                 <img
                   src={receiptBlobUrl}
                   alt="Receipt preview"
-                  className="max-h-48 mx-auto rounded-lg mb-3 object-contain"
+                  className="max-h-48 mx-auto rounded-lg mb-3 object-contain cursor-zoom-in"
+                  onClick={() => setShowReceiptZoom(true)}
                 />
               )}
               {receiptBlobUrl && receiptIsPdf && (
@@ -339,6 +353,39 @@ export function ExpenseForm({
           )}
         </div>
       </form>
+      {showReceiptZoom && receiptBlobUrl && !receiptIsPdf && (
+        <div
+          ref={zoomOverlayRef}
+          className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowReceiptZoom(false)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setShowReceiptZoom(false);
+            }
+          }}
+          tabIndex={-1}
+        >
+          <button
+            type="button"
+            aria-label="Close receipt zoom"
+            className="absolute top-4 right-4 p-2 rounded-full text-white bg-black/40 hover:bg-black/60"
+            onClick={(e) => { e.stopPropagation(); setShowReceiptZoom(false); }}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <img
+            src={receiptBlobUrl}
+            alt="Receipt zoomed preview"
+            className="max-w-[90vw] max-h-[90vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+      </>
     </Modal>
   );
 }
