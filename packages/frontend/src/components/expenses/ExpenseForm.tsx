@@ -1,3 +1,4 @@
+import { Camera, UploadSimple, FilePdf, X } from "@phosphor-icons/react";
 import { useState, useEffect, useRef } from "react";
 import type { Expense } from "../../types";
 import { Button } from "../ui/Button";
@@ -38,16 +39,28 @@ export function ExpenseForm({
   const [receiptBlobUrl, setReceiptBlobUrl] = useState<string | null>(null);
   const [receiptIsPdf, setReceiptIsPdf] = useState(false);
   const [showReceiptZoom, setShowReceiptZoom] = useState(false);
-  const [receiptFetchError, setReceiptFetchError] = useState<null | "missing" | "forbidden" | "error">(null);
+  const [receiptFetchError, setReceiptFetchError] = useState<
+    null | "missing" | "forbidden" | "error"
+  >(null);
+  const [uploadNotice, setUploadNotice] = useState<string | null>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const session = useRef(0);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const blobUrlRef = useRef<string | null>(null);
   const zoomOverlayRef = useRef<HTMLDivElement | null>(null);
 
-  const { upload, uploading, error: uploadError } = useReceiptUpload();
+  const {
+    upload,
+    uploading,
+    error: uploadError,
+    clearError,
+  } = useReceiptUpload();
 
   useEffect(() => {
+    session.current++;
     if (open) {
       if (expense) {
         setPaidDate(expense.paidDate);
@@ -57,7 +70,7 @@ export function ExpenseForm({
         setReimbursementAmount(
           expense.reimbursementAmount != null
             ? String(expense.reimbursementAmount)
-            : ""
+            : "",
         );
         setReceiptPath(expense.receiptPath);
       } else {
@@ -69,6 +82,8 @@ export function ExpenseForm({
         setReceiptPath(null);
       }
       setError(null);
+      setUploadNotice(null);
+      clearError();
     }
   }, [open, expense]);
 
@@ -84,7 +99,7 @@ export function ExpenseForm({
     setShowReceiptZoom(false);
     setReceiptFetchError(null);
 
-    if (!receiptPath) return;
+    if (!open || !receiptPath) return;
 
     const controller = new AbortController();
     const token = getToken();
@@ -95,7 +110,11 @@ export function ExpenseForm({
       .then(async (res) => {
         if (!res.ok) {
           setReceiptFetchError(
-            res.status === 404 ? "missing" : res.status === 403 ? "forbidden" : "error"
+            res.status === 404
+              ? "missing"
+              : res.status === 403
+                ? "forbidden"
+                : "error",
           );
           return;
         }
@@ -117,7 +136,7 @@ export function ExpenseForm({
         blobUrlRef.current = null;
       }
     };
-  }, [receiptPath]);
+  }, [receiptPath, open]);
 
   useEffect(() => {
     if (showReceiptZoom) {
@@ -126,13 +145,20 @@ export function ExpenseForm({
   }, [showReceiptZoom]);
 
   const handleReceiptUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const uploadSession = session.current;
+    e.target.value = "";
+    setUploadNotice(null);
     const result = await upload(file);
-    if (result) {
+    if (result && uploadSession === session.current) {
+      setUploadNotice(
+        result.extractionWarning ||
+          "Receipt attached. Review the details before saving.",
+      );
       setReceiptPath(result.receiptPath);
       if (result.extracted.paid_date && !paidDate) {
         setPaidDate(result.extracted.paid_date);
@@ -148,7 +174,14 @@ export function ExpenseForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!paidDate || !paidAmount || !description) {
+    if (uploading || saving || deleting) return;
+    if (
+      !paidDate ||
+      !paidAmount ||
+      !description.trim() ||
+      !Number.isFinite(Number(paidAmount)) ||
+      Number(paidAmount) < 0
+    ) {
       setError("Date, amount, and description are required");
       return;
     }
@@ -194,197 +227,223 @@ export function ExpenseForm({
       title={expense ? "Edit Expense" : "Add Expense"}
     >
       <>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Receipt Upload */}
-        <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
-          {uploading ? (
-            <div className="flex items-center justify-center gap-2">
-              <Spinner />
-              <span className="text-sm text-gray-500">
-                Scanning receipt...
-              </span>
-            </div>
-          ) : (
-            <>
-              {receiptBlobUrl && !receiptIsPdf && (
-                <img
-                  src={receiptBlobUrl}
-                  alt="Receipt preview"
-                  className="max-h-48 mx-auto rounded-lg mb-3 object-contain cursor-zoom-in"
-                  onClick={() => setShowReceiptZoom(true)}
-                />
-              )}
-              {receiptBlobUrl && receiptIsPdf && (
-                <a
-                  href={receiptBlobUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm text-primary-700 font-medium mb-3"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                  View PDF receipt
-                </a>
-              )}
-              <label className="cursor-pointer inline-flex flex-col items-center gap-1">
-                <svg
-                  className="w-8 h-8 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                <span className="text-sm text-primary-700 font-medium">
-                  {receiptPath ? "Replace receipt" : "Scan Receipt"}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Receipt Upload */}
+          <div className="receipt-upload">
+            {uploading ? (
+              <div className="flex items-center justify-center gap-2">
+                <Spinner />
+                <span className="text-sm text-gray-500">
+                  Scanning receipt...
                 </span>
-                <span className="text-xs text-gray-400">
-                  JPG, PNG, HEIC, or PDF
-                </span>
+              </div>
+            ) : (
+              <>
+                {receiptBlobUrl && !receiptIsPdf && (
+                  <button
+                    type="button"
+                    aria-label="Enlarge receipt"
+                    className="block mx-auto mb-3"
+                    onClick={() => setShowReceiptZoom(true)}
+                  >
+                    <img
+                      src={receiptBlobUrl}
+                      alt="Receipt preview"
+                      className="max-h-48 rounded-lg object-contain cursor-zoom-in"
+                    />
+                  </button>
+                )}
+                {receiptBlobUrl && receiptIsPdf && (
+                  <a
+                    href={receiptBlobUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-primary-700 font-medium mb-3"
+                  >
+                    <FilePdf size={20} />
+                    View PDF receipt
+                  </a>
+                )}
+                <p className="font-semibold text-sm">
+                  {receiptPath ? "Receipt attached" : "Attach a receipt"}
+                </p>
+                <p className="text-xs text-gray-600 mt-1">
+                  Photos or PDF, up to 10 MB. You can also enter details
+                  manually.
+                </p>
+                <div className="upload-actions">
+                  <button
+                    type="button"
+                    onClick={() => cameraRef.current?.click()}
+                    disabled={saving || deleting}
+                  >
+                    <Camera size={20} /> Take photo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={saving || deleting}
+                  >
+                    <UploadSimple size={20} />
+                    {receiptPath ? "Replace file" : "Photos / files"}
+                  </button>
+                </div>
                 <input
+                  ref={cameraRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/heic,image/heif,application/pdf"
+                  aria-label="Take receipt photo"
+                  accept="image/*"
                   capture="environment"
                   onChange={handleReceiptUpload}
                   className="hidden"
                 />
-              </label>
-              {receiptFetchError === "missing" && (
-                <p className="text-xs text-amber-600 mt-2">Receipt file missing on server. Please re-upload.</p>
-              )}
-              {receiptFetchError === "forbidden" && (
-                <p className="text-xs text-gray-500 mt-2">Receipt could not be accessed.</p>
-              )}
-              {receiptFetchError === "error" && (
-                <p className="text-xs text-red-500 mt-2">Failed to load receipt.</p>
-              )}
-            </>
-          )}
-          {uploadError && (
-            <p className="text-xs text-red-500 mt-2">{uploadError}</p>
-          )}
-        </div>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  aria-label="Upload receipt from photos or files"
+                  accept="image/jpeg,image/png,image/heic,image/heif,application/pdf,.jpg,.jpeg,.png,.heic,.heif,.pdf"
+                  onChange={handleReceiptUpload}
+                  className="hidden"
+                />
+                {uploadNotice && (
+                  <p role="status" className="text-xs text-primary-800 mt-3">
+                    {uploadNotice}
+                  </p>
+                )}
+                {receiptFetchError === "missing" && (
+                  <p className="text-xs text-amber-600 mt-2">
+                    Receipt file missing on server. Please re-upload.
+                  </p>
+                )}
+                {receiptFetchError === "forbidden" && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Receipt could not be accessed.
+                  </p>
+                )}
+                {receiptFetchError === "error" && (
+                  <p className="text-xs text-red-500 mt-2">
+                    Failed to load receipt.
+                  </p>
+                )}
+              </>
+            )}
+            {uploadError && (
+              <p className="text-xs text-red-500 mt-2">{uploadError}</p>
+            )}
+          </div>
 
-        <Input
-          label="Date"
-          id="paidDate"
-          type="date"
-          value={paidDate}
-          onChange={(e) => setPaidDate(e.target.value)}
-          required
-        />
-
-        <Input
-          label="Amount ($)"
-          id="paidAmount"
-          type="number"
-          step="0.01"
-          min="0"
-          value={paidAmount}
-          onChange={(e) => setPaidAmount(e.target.value)}
-          required
-        />
-
-        <Input
-          label="Description"
-          id="description"
-          type="text"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="e.g., Dental cleaning, Eye exam"
-          required
-        />
-
-        <hr className="border-gray-100" />
-
-        <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">
-          Claim / Reimbursement (optional)
-        </p>
-
-        <Input
-          label="Claim Date"
-          id="claimDate"
-          type="date"
-          value={claimDate}
-          onChange={(e) => setClaimDate(e.target.value)}
-        />
-
-        <Input
-          label="Reimbursement Amount ($)"
-          id="reimbursementAmount"
-          type="number"
-          step="0.01"
-          min="0"
-          value={reimbursementAmount}
-          onChange={(e) => setReimbursementAmount(e.target.value)}
-        />
-
-        {error && <p className="text-sm text-red-500">{error}</p>}
-
-        <div className="flex gap-2 pt-2">
-          <Button
-            type="submit"
-            disabled={saving}
-            className="flex-1"
-          >
-            {saving ? "Saving..." : expense ? "Update" : "Add Expense"}
-          </Button>
-          {expense && onDelete && (
-            <Button
-              type="button"
-              variant="danger"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
-              {deleting ? "..." : "Delete"}
-            </Button>
-          )}
-        </div>
-      </form>
-      {showReceiptZoom && receiptBlobUrl && !receiptIsPdf && (
-        <div
-          ref={zoomOverlayRef}
-          className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setShowReceiptZoom(false)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") {
-              setShowReceiptZoom(false);
-            }
-          }}
-          tabIndex={-1}
-        >
-          <button
-            type="button"
-            aria-label="Close receipt zoom"
-            className="absolute top-4 right-4 p-2 rounded-full text-white bg-black/40 hover:bg-black/60"
-            onClick={(e) => { e.stopPropagation(); setShowReceiptZoom(false); }}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          <img
-            src={receiptBlobUrl}
-            alt="Receipt zoomed preview"
-            className="max-w-[90vw] max-h-[90vh] object-contain"
-            onClick={(e) => e.stopPropagation()}
+          <Input
+            label="Date"
+            id="paidDate"
+            type="date"
+            value={paidDate}
+            onChange={(e) => setPaidDate(e.target.value)}
+            required
           />
-        </div>
-      )}
+
+          <Input
+            label="Amount ($)"
+            id="paidAmount"
+            type="number"
+            step="0.01"
+            min="0"
+            value={paidAmount}
+            onChange={(e) => setPaidAmount(e.target.value)}
+            required
+          />
+
+          <Input
+            label="Description"
+            id="description"
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="e.g., Dental cleaning, Eye exam"
+            required
+          />
+
+          <hr className="border-gray-100" />
+
+          <p className="text-sm text-gray-600 font-medium">
+            Claim / Reimbursement (optional)
+          </p>
+
+          <Input
+            label="Claim Date"
+            id="claimDate"
+            type="date"
+            value={claimDate}
+            onChange={(e) => setClaimDate(e.target.value)}
+          />
+
+          <Input
+            label="Reimbursement Amount ($)"
+            id="reimbursementAmount"
+            type="number"
+            step="0.01"
+            min="0"
+            value={reimbursementAmount}
+            onChange={(e) => setReimbursementAmount(e.target.value)}
+          />
+
+          {error && <p className="text-sm text-red-500">{error}</p>}
+
+          <div className="form-actions flex gap-2">
+            <Button
+              type="submit"
+              disabled={saving || uploading || deleting}
+              className="flex-1"
+            >
+              {saving ? "Saving..." : expense ? "Update" : "Add Expense"}
+            </Button>
+            {expense && onDelete && (
+              <Button
+                type="button"
+                variant="danger"
+                onClick={handleDelete}
+                disabled={deleting || uploading || saving}
+              >
+                {deleting ? "..." : "Delete"}
+              </Button>
+            )}
+          </div>
+        </form>
+        {showReceiptZoom && receiptBlobUrl && !receiptIsPdf && (
+          <div
+            ref={zoomOverlayRef}
+            className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Receipt preview"
+            onClick={() => setShowReceiptZoom(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowReceiptZoom(false);
+              }
+            }}
+            tabIndex={-1}
+          >
+            <button
+              type="button"
+              aria-label="Close receipt zoom"
+              className="absolute top-4 right-4 p-2 rounded-full text-white bg-black/40 hover:bg-black/60"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowReceiptZoom(false);
+              }}
+            >
+              <X size={20} />
+            </button>
+            <img
+              src={receiptBlobUrl}
+              alt="Receipt zoomed preview"
+              className="max-w-[90vw] max-h-[90vh] object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
       </>
     </Modal>
   );

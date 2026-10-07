@@ -82,10 +82,22 @@ In production, Express serves the frontend static files. Put behind nginx with H
 
 ## Features
 
-- Login/authentication (JWT)
+- Login/authentication (JWT), with native password-manager fields
 - Add, edit, delete medical expenses
 - Track claim status and reimbursement amounts
-- View expenses by year with totals
-- Upload receipts (JPG, PNG, PDF) with AI data extraction
-- Export yearly expenses to CSV
+- View expenses by year or an inclusive custom date range, with a default 365-day window
+- Separate camera and photo/file pickers for JPG, PNG, HEIC, and PDF receipts (up to 10 MB)
+- AI extraction for photos; PDFs attach directly with manual entry, and failed scans retain the attachment
+- Export the selected date window to CSV
 - Installable as PWA on mobile
+
+## Validation
+
+```bash
+npm test
+npm run build
+```
+
+Date-range tests cover inclusive boundaries, cross-year and leap-year windows, invalid API dates, user isolation, totals, and PDF attachment handling. Custom dates start with a 365-day window; uncheck **Keep a 365-day window** to choose a different span. Changing either endpoint while locked adjusts the other endpoint. **Apply dates** updates the list, totals, and CSV export together.
+
+Login submits values directly from the native form so password-manager fills work even without React input events. LastPass detection and the native photo/file picker should also be checked on the target phone/browser; extensions and OS autofill settings are outside the web app.

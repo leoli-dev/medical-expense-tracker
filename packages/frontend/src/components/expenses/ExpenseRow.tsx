@@ -1,63 +1,45 @@
+import { CaretRight, Paperclip } from "@phosphor-icons/react";
 import type { Expense } from "../../types";
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-  }).format(amount);
-}
-
-function formatDate(dateStr: string): string {
-  const [, month, day] = dateStr.split("-");
-  return `${month}/${day}`;
-}
-
-interface ExpenseRowProps {
+const money = (value: number) =>
+  new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD" }).format(
+    value,
+  );
+export function ExpenseRow({
+  expense,
+  onClick,
+}: {
   expense: Expense;
   onClick: () => void;
-}
-
-export function ExpenseRow({ expense, onClick }: ExpenseRowProps) {
-  const hasReimbursement =
+}) {
+  const reimbursed =
     expense.reimbursementAmount != null && expense.reimbursementAmount > 0;
-
+  const date = new Date(`${expense.paidDate}T12:00:00`);
   return (
-    <button
-      onClick={onClick}
-      className="w-full text-left bg-white rounded-xl p-3 shadow-sm border border-gray-100 hover:border-primary-200 active:bg-gray-50 transition-colors"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-xs text-gray-400 font-mono">
-              {formatDate(expense.paidDate)}
+    <button onClick={onClick} className="expense-row">
+      <div className="date-tile">
+        <span>{date.toLocaleDateString("en-CA", { month: "short" })}</span>
+        <strong>{date.getDate()}</strong>
+        <small>{date.getFullYear()}</small>
+      </div>
+      <div className="expense-description">
+        <strong>{expense.description}</strong>
+        <div className="expense-meta">
+          <span className={reimbursed ? "status-reimbursed" : "status-paid"}>
+            {reimbursed ? "Reimbursed" : "Paid"}
+          </span>
+          {expense.receiptPath && (
+            <span>
+              <Paperclip size={14} />
+              Receipt
             </span>
-            {hasReimbursement && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700">
-                Claimed
-              </span>
-            )}
-            {expense.receiptPath && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
-                Receipt
-              </span>
-            )}
-          </div>
-          <p className="text-sm text-gray-900 truncate">
-            {expense.description}
-          </p>
-        </div>
-        <div className="text-right flex-shrink-0">
-          <p className="text-sm font-semibold text-gray-900">
-            {formatCurrency(expense.paidAmount)}
-          </p>
-          {hasReimbursement && (
-            <p className="text-xs text-green-600">
-              -{formatCurrency(expense.reimbursementAmount!)}
-            </p>
           )}
         </div>
       </div>
+      <div className="expense-amount">
+        <strong>{money(expense.paidAmount)}</strong>
+        {reimbursed && <span>{money(expense.reimbursementAmount!)} back</span>}
+      </div>
+      <CaretRight size={18} className="row-caret" />
     </button>
   );
 }

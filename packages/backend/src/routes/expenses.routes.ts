@@ -1,11 +1,12 @@
 import { Router, Request, Response } from "express";
 import { authMiddleware } from "../middleware/auth.js";
 import {
-  getExpensesByYear,
+  getExpensesByRange,
   createExpense,
   updateExpense,
   deleteExpense,
 } from "../services/expense.service.js";
+import { parseExpenseRange } from "../utils/dateRange.js";
 import { generateCSV } from "../utils/csv.js";
 
 const router = Router();
@@ -13,14 +14,33 @@ const router = Router();
 router.use(authMiddleware);
 
 router.get("/", async (req: Request, res: Response) => {
-  const year = parseInt(req.query.year as string) || new Date().getFullYear();
-  const result = await getExpensesByYear(req.user!.userId, year);
+  const range = parseExpenseRange(req.query);
+  if (!range) {
+    res
+      .status(400)
+      .json({
+        error:
+          "Provide valid startDate and endDate (YYYY-MM-DD), with startDate on or before endDate",
+      });
+    return;
+  }
+  const result = await getExpensesByRange(
+    req.user!.userId,
+    range.startDate,
+    range.endDate,
+  );
   res.json(result);
 });
 
 router.post("/", async (req: Request, res: Response) => {
-  const { paidDate, paidAmount, description, claimDate, reimbursementAmount, receiptPath } =
-    req.body;
+  const {
+    paidDate,
+    paidAmount,
+    description,
+    claimDate,
+    reimbursementAmount,
+    receiptPath,
+  } = req.body;
 
   if (!paidDate || paidAmount === undefined || !description) {
     res
@@ -35,7 +55,8 @@ router.post("/", async (req: Request, res: Response) => {
     paidAmount: parseFloat(String(paidAmount)),
     description,
     claimDate: claimDate || null,
-    reimbursementAmount: reimbursementAmount != null ? parseFloat(reimbursementAmount) : null,
+    reimbursementAmount:
+      reimbursementAmount != null ? parseFloat(reimbursementAmount) : null,
     receiptPath: receiptPath || null,
   });
 
@@ -44,12 +65,19 @@ router.post("/", async (req: Request, res: Response) => {
 
 router.put("/:id", async (req: Request, res: Response) => {
   const id = parseInt(req.params.id as string);
-  const { paidDate, paidAmount, description, claimDate, reimbursementAmount, receiptPath } =
-    req.body;
+  const {
+    paidDate,
+    paidAmount,
+    description,
+    claimDate,
+    reimbursementAmount,
+    receiptPath,
+  } = req.body;
 
   const updateData: Record<string, unknown> = {};
   if (paidDate !== undefined) updateData.paidDate = paidDate;
-  if (paidAmount !== undefined) updateData.paidAmount = parseFloat(String(paidAmount));
+  if (paidAmount !== undefined)
+    updateData.paidAmount = parseFloat(String(paidAmount));
   if (description !== undefined) updateData.description = description;
   if (claimDate !== undefined) updateData.claimDate = claimDate;
   if (reimbursementAmount !== undefined)
@@ -79,15 +107,28 @@ router.delete("/:id", async (req: Request, res: Response) => {
 });
 
 router.get("/export", async (req: Request, res: Response) => {
-  const year = parseInt(req.query.year as string) || new Date().getFullYear();
-  const result = await getExpensesByYear(req.user!.userId, year);
+  const range = parseExpenseRange(req.query);
+  if (!range) {
+    res
+      .status(400)
+      .json({
+        error:
+          "Provide valid startDate and endDate (YYYY-MM-DD), with startDate on or before endDate",
+      });
+    return;
+  }
+  const result = await getExpensesByRange(
+    req.user!.userId,
+    range.startDate,
+    range.endDate,
+  );
 
   const csv = generateCSV(result.items);
 
   res.setHeader("Content-Type", "text/csv");
   res.setHeader(
     "Content-Disposition",
-    `attachment; filename="medical-expenses-${year}.csv"`
+    `attachment; filename="medical-expenses-${range.startDate}-to-${range.endDate}.csv"`,
   );
   res.send(csv);
 });

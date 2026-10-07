@@ -1,37 +1,26 @@
 import type { ExpenseTotals } from "../../types";
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-  }).format(amount);
-}
-
-interface ExpenseSummaryProps {
-  totals: ExpenseTotals;
-}
-
-export function ExpenseSummary({ totals }: ExpenseSummaryProps) {
+const money = (value: number) =>
+  new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD" }).format(
+    value,
+  );
+export function ExpenseSummary({ totals }: { totals: ExpenseTotals }) {
   return (
-    <div className="grid grid-cols-3 gap-2">
-      <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
-        <p className="text-xs text-gray-500 mb-1">Total Paid</p>
-        <p className="text-sm font-semibold text-gray-900">
-          {formatCurrency(totals.totalPaid)}
-        </p>
+    <section className="summary" aria-label="Expense totals">
+      <div className="summary-main">
+        <p>Out of Pocket</p>
+        <strong>{money(totals.outOfPocket)}</strong>
+        <span>Paid by you, after reimbursement</span>
       </div>
-      <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
-        <p className="text-xs text-gray-500 mb-1">Reimbursed</p>
-        <p className="text-sm font-semibold text-green-600">
-          {formatCurrency(totals.totalReimbursed)}
-        </p>
+      <div className="summary-details">
+        <div>
+          <p>Total Paid</p>
+          <strong>{money(totals.totalPaid)}</strong>
+        </div>
+        <div>
+          <p>Reimbursed</p>
+          <strong>{money(totals.totalReimbursed)}</strong>
+        </div>
       </div>
-      <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
-        <p className="text-xs text-gray-500 mb-1">Out of Pocket</p>
-        <p className="text-sm font-semibold text-red-600">
-          {formatCurrency(totals.outOfPocket)}
-        </p>
-      </div>
-    </div>
+    </section>
   );
 }

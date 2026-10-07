@@ -7,6 +7,7 @@
     "packages/frontend"
   ],
   "scripts": {
+    "test": "node --import tsx --test tests/*.test.ts",
     "dev": "concurrently \"npm run dev -w packages/backend\" \"npm run dev -w packages/frontend\"",
     "build": "npm run build -w packages/backend && npm run build -w packages/frontend",
     "db:push": "npm run db:push -w packages/backend",

@@ -1,3 +1,5 @@
+import { Plus } from "@phosphor-icons/react";
+import { yearRange } from "../utils/dateRange";
 import { useState } from "react";
 import type { Expense } from "../types";
 import { useExpenses } from "../hooks/useExpenses";
@@ -10,7 +12,7 @@ import { ExportButton } from "../components/export/ExportButton";
 import { Toast } from "../components/ui/Toast";
 
 export function DashboardPage() {
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [range, setRange] = useState(() => yearRange(new Date().getFullYear()));
   const [formOpen, setFormOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [toast, setToast] = useState<{
@@ -18,8 +20,15 @@ export function DashboardPage() {
     type: "success" | "error";
   } | null>(null);
 
-  const { items, totals, loading, error, addExpense, editExpense, removeExpense } =
-    useExpenses(year);
+  const {
+    items,
+    totals,
+    loading,
+    error,
+    addExpense,
+    editExpense,
+    removeExpense,
+  } = useExpenses(range);
 
   const handleSelect = (expense: Expense) => {
     setSelectedExpense(expense);
@@ -66,43 +75,57 @@ export function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4" style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}>
-        <YearSelector year={year} onChange={setYear} />
-
-        <ExpenseSummary totals={totals} />
-
-        <div className="flex justify-end">
-          <ExportButton year={year} disabled={items.length === 0} />
+      <div className="dashboard-content">
+        <div className="dashboard-heading">
+          <div>
+            <h1>Medical expenses</h1>
+            <p>Your payments, receipts, and reimbursements in one place.</p>
+          </div>
+          <button className="add-desktop" onClick={handleAdd}>
+            <Plus size={20} /> Add Expense
+          </button>
         </div>
-
-        <ExpenseList
-          items={items}
-          loading={loading}
-          error={error}
-          onSelect={handleSelect}
-        />
-      </div>
-
-      {/* Floating Add Button */}
-      <button
-        onClick={handleAdd}
-        className="fixed right-6 w-14 h-14 bg-primary-700 text-white rounded-full shadow-lg hover:bg-primary-800 active:bg-primary-900 transition-colors flex items-center justify-center"
-        style={{ bottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))" }}
-      >
-        <svg
-          className="w-7 h-7"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 4v16m8-8H4"
+        <YearSelector range={range} onChange={setRange} />
+        {error ? (
+          <p role="alert" className="text-red-700">
+            {error}
+          </p>
+        ) : loading ? (
+          <div className="summary-loading" role="status">
+            Updating totals...
+          </div>
+        ) : (
+          <ExpenseSummary totals={totals} />
+        )}
+        <section className="ledger">
+          <div className="ledger-heading">
+            <div>
+              <h2>Expense history</h2>
+              <span>
+                {loading
+                  ? "Loading expenses..."
+                  : `${items.length} ${items.length === 1 ? "expense" : "expenses"} in this period`}
+              </span>
+            </div>
+            <ExportButton
+              range={range}
+              disabled={loading || !!error || items.length === 0}
+            />
+          </div>
+          <ExpenseList
+            items={items}
+            loading={loading}
+            error={error}
+            onSelect={handleSelect}
+            onAdd={handleAdd}
           />
-        </svg>
-      </button>
+        </section>
+      </div>
+      <div className="mobile-action">
+        <button onClick={handleAdd}>
+          <Plus size={22} /> Add Expense
+        </button>
+      </div>
 
       <ExpenseForm
         open={formOpen}
