@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import type { DateRange } from "../utils/dateRange";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { Expense, ExpenseTotals } from "../types";
 import {
   getExpensesAPI,
@@ -7,7 +8,7 @@ import {
   deleteExpenseAPI,
 } from "../api/expenses.api";
 
-export function useExpenses(year: number) {
+export function useExpenses(range: DateRange) {
   const [items, setItems] = useState<Expense[]>([]);
   const [totals, setTotals] = useState<ExpenseTotals>({
     totalPaid: 0,
@@ -17,19 +18,23 @@ export function useExpenses(year: number) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const requestId = useRef(0);
   const refresh = useCallback(async () => {
+    const id = ++requestId.current;
     setLoading(true);
     setError(null);
     try {
-      const data = await getExpensesAPI(year);
+      const data = await getExpensesAPI(range);
+      if (id !== requestId.current) return;
       setItems(data.items);
       setTotals(data.totals);
     } catch (err) {
+      if (id !== requestId.current) return;
       setError(err instanceof Error ? err.message : "Failed to load expenses");
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
-  }, [year]);
+  }, [range.startDate, range.endDate]);
 
   useEffect(() => {
     refresh();
@@ -56,7 +61,7 @@ export function useExpenses(year: number) {
       claimDate: string | null;
       reimbursementAmount: number | null;
       receiptPath: string | null;
-    }>
+    }>,
   ) => {
     await updateExpenseAPI(id, data);
     await refresh();

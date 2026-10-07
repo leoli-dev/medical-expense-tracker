@@ -3,102 +3,112 @@ import { useAuth } from "../context/AuthContext";
 import { loginAPI } from "../api/auth.api";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
-
+import { Eye, EyeSlash, Receipt } from "@phosphor-icons/react";
 export function LoginPage() {
   const { login } = useAuth();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: FormEvent) => {
+  const [showPassword, setShowPassword] = useState(false);
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    // Read the actual inputs: password managers may fill them without React events.
+    const data = new FormData(e.currentTarget);
     setError(null);
     setLoading(true);
-
     try {
-      const result = await loginAPI(username, password);
+      const result = await loginAPI(
+        String(data.get("username") || ""),
+        String(data.get("password") || ""),
+      );
       login(result.token, result.user);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }
-  };
-
+  }
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg
-              className="w-8 h-8 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
+    <main className="login-page">
+      <div className="login-layout">
+        <div className="login-intro">
+          <a href="/" className="brand">
+            <img src="/favicon.svg" alt="" />
+            <span>MedExpense</span>
+          </a>
+          <div className="login-story">
+            <Receipt size={48} weight="light" />
+            <h1>
+              Your health expenses.
+              <br />
+              All accounted for.
+            </h1>
+            <p>
+              Keep receipts, track reimbursements, and bring your medical
+              expenses together in one place.
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">MedExpense</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Medical Expense Tracker
-          </p>
+          <p className="login-footnote">Medical Expense Tracker</p>
         </div>
-
-        <form
-          onSubmit={handleSubmit}
-          method="post"
-          autoComplete="on"
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4"
-        >
-          <Input
-            label="Username"
-            id="username"
-            name="username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            autoComplete="username"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            inputMode="text"
-            required
-          />
-          <Input
-            label="Password"
-            id="password"
-            name="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            required
-          />
-
-          {error && (
-            <p className="text-sm text-red-500 text-center">{error}</p>
-          )}
-
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full"
-            size="lg"
+        <section className="login-card">
+          <h2>Welcome back</h2>
+          <p>Sign in to your expense tracker.</p>
+          <form
+            id="login-form"
+            action="/api/auth/login"
+            onSubmit={handleSubmit}
+            method="post"
+            autoComplete="on"
+            className="space-y-5"
           >
-            {loading ? "Signing in..." : "Sign In"}
-          </Button>
-        </form>
+            <Input
+              label="Username"
+              id="username"
+              name="username"
+              type="text"
+              autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              required
+            />
+            <div className="password-field">
+              <Input
+                label="Password"
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            {error && (
+              <p role="alert" className="text-sm text-red-700">
+                {error}
+              </p>
+            )}
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full"
+              size="lg"
+            >
+              {loading ? "Signing in..." : "Sign In"}
+            </Button>
+          </form>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,3 +1,4 @@
+import { Receipt } from "@phosphor-icons/react";
 import type { Expense } from "../../types";
 import { ExpenseRow } from "./ExpenseRow";
 import { Spinner } from "../ui/Spinner";
@@ -6,6 +7,7 @@ interface ExpenseListProps {
   items: Expense[];
   loading: boolean;
   error: string | null;
+  onAdd: () => void;
   onSelect: (expense: Expense) => void;
 }
 
@@ -14,6 +16,7 @@ export function ExpenseList({
   loading,
   error,
   onSelect,
+  onAdd,
 }: ExpenseListProps) {
   if (loading) {
     return (
@@ -34,31 +37,32 @@ export function ExpenseList({
   if (items.length === 0) {
     return (
       <div className="text-center py-12">
-        <svg
-          className="w-12 h-12 text-gray-300 mx-auto mb-3"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-          />
-        </svg>
-        <p className="text-gray-400 text-sm">No expenses for this year</p>
-        <p className="text-gray-400 text-xs mt-1">
-          Tap + to add your first expense
+        <Receipt
+          size={40}
+          weight="light"
+          className="mx-auto mb-3 text-primary-700"
+        />
+        <h3 className="font-semibold text-gray-900">
+          No expenses in this period
+        </h3>
+        <p className="text-gray-500 text-sm mt-1">
+          Add a receipt or enter an expense to get started.
         </p>
+        <button className="empty-add" onClick={onAdd}>
+          Add your first expense
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="expense-list">
       {items.map((item) => (
-        <ExpenseRow key={item.id} expense={item} onClick={() => onSelect(item)} />
+        <ExpenseRow
+          key={item.id}
+          expense={item}
+          onClick={() => onSelect(item)}
+        />
       ))}
     </div>
   );

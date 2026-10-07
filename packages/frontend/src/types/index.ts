@@ -41,6 +41,7 @@ export interface ExtractedReceiptData {
 }
 
 export interface ReceiptUploadResponse {
+  extractionWarning?: string;
   receiptPath: string;
   extracted: ExtractedReceiptData;
 }

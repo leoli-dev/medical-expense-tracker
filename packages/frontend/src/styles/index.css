@@ -1,3 +1,745 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #193b40;
+    background: #f3f7f7;
+    font-synthesis: none;
+  }
+  body {
+    margin: 0;
+  }
+  button,
+  input,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button {
+    touch-action: manipulation;
+  }
+  button:focus-visible,
+  a:focus-visible {
+    outline: 3px solid #0d9488;
+    outline-offset: 4px;
+  }
+  input[type="date"] {
+    min-inline-size: 0;
+    max-width: 100%;
+  }
+  input[type="checkbox"] {
+    accent-color: #0f766e;
+    width: 18px;
+    height: 18px;
+  }
+}
+@layer components {
+  .app-shell {
+    min-height: 100dvh;
+  }
+  .app-header {
+    background: white;
+    border-bottom: 1px solid #dce7e7;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .header-inner {
+    max-width: 1100px;
+    margin: auto;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #193b40;
+  }
+  .brand img {
+    width: 34px;
+    height: 34px;
+  }
+  .account {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    font-size: 14px;
+    color: #51666c;
+  }
+  .account > span {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .account button {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 44px;
+  }
+  .app-main {
+    max-width: 1100px;
+    margin: auto;
+    padding: 40px 32px 60px;
+  }
+  .dashboard-content {
+    display: grid;
+    gap: 24px;
+  }
+  .dashboard-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .dashboard-heading h1 {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -1px;
+  }
+  .dashboard-heading p {
+    font-size: 15px;
+    color: #51666c;
+    margin-top: 7px;
+  }
+  .add-desktop,
+  .mobile-action button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 12px;
+    background: #0f766e;
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    min-height: 48px;
+    padding: 12px 20px;
+    white-space: nowrap;
+  }
+  .add-desktop:hover,
+  .mobile-action button:hover {
+    background: #115e59;
+  }
+  .period-panel {
+    background: #fff;
+    border: 1px solid #dce7e7;
+    border-radius: 16px;
+    padding: 20px 24px;
+  }
+  .period-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .segmented {
+    display: flex;
+    padding: 4px;
+    border-radius: 10px;
+    background: #eff4f4;
+  }
+  .segmented button {
+    min-height: 40px;
+    padding: 6px 16px;
+    font-size: 14px;
+    border-radius: 7px;
+    color: #51666c;
+  }
+  .segmented button[aria-pressed="true"] {
+    background: white;
+    color: #115e59;
+    box-shadow: 0 1px 3px #193b4015;
+    font-weight: 600;
+  }
+  .year-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    padding-top: 16px;
+  }
+  .year-navigation button {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #dce7e7;
+    border-radius: 10px;
+  }
+  .year-navigation button:disabled {
+    opacity: 0.4;
+  }
+  .year-navigation button:hover {
+    background: #eff4f4;
+  }
+  .year-navigation div {
+    text-align: center;
+  }
+  .year-navigation strong {
+    display: block;
+    font-size: 28px;
+    letter-spacing: -0.6px;
+  }
+  .year-navigation span {
+    font-size: 13px;
+    color: #51666c;
+  }
+  .period-form {
+    margin-top: 20px;
+    display: grid;
+    gap: 16px;
+  }
+  .date-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .date-fields > div {
+    min-width: 0;
+  }
+  .period-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+  .period-caption {
+    color: #51666c;
+    font-size: 13px;
+  }
+  .summary {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 0;
+    background: #e5f1ef;
+    border: 1px solid #cee4df;
+    border-radius: 16px;
+    padding: 28px;
+  }
+  .summary p {
+    font-size: 14px;
+    color: #36595c;
+    margin-bottom: 6px;
+  }
+  .summary-main strong {
+    font-size: 42px;
+    line-height: 1.2;
+    letter-spacing: -1.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    display: block;
+    overflow-wrap: anywhere;
+  }
+  .summary-main > span {
+    font-size: 13px;
+    color: #36595c;
+    display: block;
+    margin-top: 10px;
+  }
+  .summary-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    border-left: 1px solid #bad9d2;
+    padding-left: 32px;
+    gap: 24px;
+  }
+  .summary-details strong {
+    font-size: 24px;
+    font-weight: 650;
+    letter-spacing: -0.6px;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+  .summary-loading {
+    padding: 40px;
+    text-align: center;
+    color: #51666c;
+    background: #e5f1ef;
+    border-radius: 16px;
+  }
+  .ledger {
+    background: white;
+    border: 1px solid #dce7e7;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .ledger-heading {
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 1px solid #e6eeee;
+  }
+  .ledger-heading h2 {
+    font-size: 18px;
+    font-weight: 650;
+    letter-spacing: -0.4px;
+  }
+  .ledger-heading span {
+    font-size: 13px;
+    color: #51666c;
+  }
+  .expense-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 20px 24px;
+    width: 100%;
+    text-align: left;
+  }
+  .expense-row + .expense-row {
+    border-top: 1px solid #edf2f2;
+  }
+  .expense-row:hover {
+    background: #f6fafa;
+  }
+  .date-tile {
+    width: 52px;
+    flex-shrink: 0;
+    text-align: center;
+    border-radius: 10px;
+    background: #eff4f4;
+    padding: 5px 0;
+  }
+  .date-tile span,
+  .date-tile small {
+    display: block;
+    font-size: 11px;
+    color: #51666c;
+  }
+  .date-tile strong {
+    font-size: 20px;
+    font-weight: 650;
+    line-height: 1.15;
+  }
+  .expense-description {
+    flex: 1;
+    min-width: 0;
+  }
+  .expense-description > strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .expense-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #51666c;
+  }
+  .expense-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .status-reimbursed {
+    color: #0f766e;
+    background: #e5f1ef;
+    padding: 2px 7px;
+    border-radius: 5px;
+  }
+  .expense-amount {
+    text-align: right;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .expense-amount strong {
+    display: block;
+    font-size: 16px;
+    font-weight: 650;
+  }
+  .expense-amount span {
+    display: block;
+    font-size: 12px;
+    color: #0f766e;
+    margin-top: 5px;
+  }
+  .row-caret {
+    color: #82989b;
+    flex-shrink: 0;
+  }
+  .empty-add {
+    color: #0f766e;
+    font-size: 14px;
+    font-weight: 600;
+    min-height: 44px;
+    margin-top: 12px;
+  }
+  .mobile-action {
+    display: none;
+  }
+  .expense-dialog {
+    padding: 0;
+    border: 0;
+    width: calc(100% - 32px);
+    max-width: 560px;
+    max-height: 90dvh;
+    border-radius: 20px;
+    background: #fff;
+    color: #193b40;
+    overflow: auto;
+    box-shadow: 0 24px 80px #193b4033;
+  }
+  .expense-dialog::backdrop {
+    background: #102f3866;
+  }
+  .dialog-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 24px;
+    border-bottom: 1px solid #e6eeee;
+    gap: 12px;
+  }
+  .dialog-header h2 {
+    font-size: 20px;
+    font-weight: 650;
+    letter-spacing: -0.5px;
+  }
+  .dialog-header p {
+    font-size: 13px;
+    color: #51666c;
+    margin-top: 4px;
+  }
+  .dialog-header button {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: #eff4f4;
+    flex-shrink: 0;
+  }
+  .dialog-body {
+    padding: 24px;
+  }
+  .receipt-upload {
+    background: #f5fafa;
+    border: 1px dashed #aacbc5;
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+  }
+  .upload-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .upload-actions button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    background: white;
+    border: 1px solid #bcd4d0;
+    border-radius: 10px;
+    color: #115e59;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .upload-actions button:disabled {
+    opacity: 0.5;
+  }
+  .form-actions {
+    position: sticky;
+    bottom: -24px;
+    background: white;
+    padding: 16px 0;
+    border-top: 1px solid #e6eeee;
+  }
+  .login-page {
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 40px 24px;
+  }
+  .login-layout {
+    width: 100%;
+    max-width: 960px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 70px;
+    align-items: center;
+  }
+  .login-intro {
+    display: grid;
+    gap: 56px;
+  }
+  .login-story > svg {
+    color: #0f766e;
+    margin-bottom: 20px;
+  }
+  .login-story h1 {
+    font-size: 40px;
+    letter-spacing: -1.5px;
+    font-weight: 650;
+    line-height: 1.16;
+  }
+  .login-story p {
+    color: #51666c;
+    font-size: 16px;
+    line-height: 1.7;
+    max-width: 360px;
+    margin-top: 20px;
+  }
+  .login-footnote {
+    font-size: 13px;
+    color: #51666c;
+  }
+  .login-card {
+    background: white;
+    border: 1px solid #dce7e7;
+    border-radius: 20px;
+    padding: 36px;
+  }
+  .login-card h2 {
+    font-size: 26px;
+    letter-spacing: -0.7px;
+    font-weight: 650;
+  }
+  .login-card > p {
+    color: #51666c;
+    font-size: 14px;
+    margin: 8px 0 30px;
+  }
+  .password-field {
+    position: relative;
+  }
+  .password-field input {
+    padding-right: 80px;
+  }
+  .password-toggle {
+    position: absolute;
+    right: 32px;
+    bottom: 2px;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    color: #51666c;
+  }
+}
+@media (max-width: 640px) {
+  .header-inner {
+    padding: 12px 20px;
+  }
+  .brand {
+    font-size: 17px;
+  }
+  .brand img {
+    width: 30px;
+    height: 30px;
+  }
+  .account {
+    gap: 12px;
+  }
+  .account > span {
+    max-width: 85px;
+    font-size: 12px;
+  }
+  .account button span {
+    display: none;
+  }
+  .app-main {
+    padding: 24px 16px calc(110px + env(safe-area-inset-bottom, 0px));
+  }
+  .dashboard-content {
+    gap: 18px;
+  }
+  .dashboard-heading h1 {
+    font-size: 26px;
+  }
+  .dashboard-heading p {
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 280px;
+  }
+  .add-desktop {
+    display: none;
+  }
+  .period-panel {
+    padding: 16px;
+  }
+  .period-top {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .segmented {
+    width: 100%;
+  }
+  .segmented button {
+    flex: 1;
+  }
+  .year-navigation {
+    padding-top: 18px;
+    gap: 28px;
+  }
+  .period-options {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .period-options > button {
+    width: 100%;
+  }
+  .date-fields {
+    gap: 10px;
+  }
+  .period-caption {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .summary {
+    display: block;
+    padding: 24px;
+  }
+  .summary-main strong {
+    font-size: 38px;
+  }
+  .summary-details {
+    border-left: 0;
+    border-top: 1px solid #bad9d2;
+    padding: 18px 0 0;
+    margin-top: 20px;
+    gap: 16px;
+  }
+  .summary-details strong {
+    font-size: 22px;
+  }
+  .summary-details p {
+    font-size: 13px;
+  }
+  .ledger-heading {
+    padding: 18px 16px;
+    gap: 8px;
+  }
+  .ledger-heading h2 {
+    font-size: 16px;
+  }
+  .ledger-heading span {
+    font-size: 12px;
+  }
+  .expense-row {
+    padding: 16px;
+    gap: 12px;
+  }
+  .date-tile {
+    width: 44px;
+  }
+  .expense-description > strong {
+    font-size: 14px;
+  }
+  .expense-amount strong {
+    font-size: 14px;
+  }
+  .expense-amount span {
+    font-size: 11px;
+  }
+  .row-caret {
+    display: none;
+  }
+  .mobile-action {
+    display: block;
+    position: fixed;
+    z-index: 10;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: #f3f7f7;
+    border-top: 1px solid #dce7e7;
+  }
+  .mobile-action button {
+    width: 100%;
+  }
+  .expense-dialog {
+    margin: auto 0 0;
+    width: 100%;
+    max-width: none;
+    max-height: 94dvh;
+    border-radius: 20px 20px 0 0;
+  }
+  .dialog-header {
+    padding: 16px 20px;
+  }
+  .dialog-body {
+    padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+  .receipt-upload {
+    padding: 16px;
+  }
+  .upload-actions {
+    gap: 8px;
+  }
+  .upload-actions button {
+    font-size: 13px;
+  }
+  .login-page {
+    padding: 32px 20px;
+  }
+  .login-layout {
+    display: block;
+    max-width: 420px;
+  }
+  .login-intro {
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+  .login-story > svg,
+  .login-footnote {
+    display: none;
+  }
+  .login-story h1 {
+    font-size: 30px;
+    letter-spacing: -1px;
+  }
+  .login-story p {
+    margin-top: 12px;
+    font-size: 14px;
+  }
+  .login-card {
+    padding: 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -12,13 +12,16 @@ const ALLOWED_MIMES = [
   "application/pdf",
 ];
 
-const HEIC_EXTENSIONS = [".heic", ".heif"];
+const FALLBACK_EXTENSIONS = [".jpg", ".jpeg", ".png", ".heic", ".heif", ".pdf"];
 
 function isAllowed(file: Express.Multer.File): boolean {
   if (ALLOWED_MIMES.includes(file.mimetype)) return true;
   // Browsers often report HEIC files as application/octet-stream or empty MIME
   const ext = path.extname(file.originalname).toLowerCase();
-  return HEIC_EXTENSIONS.includes(ext);
+  return (
+    (!file.mimetype || file.mimetype === "application/octet-stream") &&
+    FALLBACK_EXTENSIONS.includes(ext)
+  );
 }
 
 const storage = multer.diskStorage({

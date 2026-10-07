@@ -20,5 +20,5 @@ export function useReceiptUpload() {
     }
   };
 
-  return { upload, uploading, error };
+  return { upload, uploading, error, clearError: () => setError(null) };
 }

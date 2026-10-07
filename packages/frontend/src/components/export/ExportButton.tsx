@@ -1,47 +1,48 @@
+import { DownloadSimple } from "@phosphor-icons/react";
+import type { DateRange } from "../../utils/dateRange";
 import { useState } from "react";
 import { Button } from "../ui/Button";
 import { exportExpensesCSV } from "../../api/expenses.api";
 
 interface ExportButtonProps {
-  year: number;
+  range: DateRange;
   disabled?: boolean;
 }
 
-export function ExportButton({ year, disabled }: ExportButtonProps) {
+export function ExportButton({ range, disabled }: ExportButtonProps) {
+  const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
 
   const handleExport = async () => {
     setExporting(true);
+    setError(null);
     try {
-      await exportExpensesCSV(year);
+      await exportExpensesCSV(range);
     } catch (err) {
-      console.error("Export failed:", err);
+      setError(
+        err instanceof Error ? err.message : "Export failed. Try again.",
+      );
     } finally {
       setExporting(false);
     }
   };
 
   return (
-    <Button
-      variant="secondary"
-      size="sm"
-      onClick={handleExport}
-      disabled={disabled || exporting}
-    >
-      <svg
-        className="w-4 h-4 mr-1.5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
+    <div className="export-action">
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={handleExport}
+        disabled={disabled || exporting}
       >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-        />
-      </svg>
-      {exporting ? "Exporting..." : "CSV"}
-    </Button>
+        <DownloadSimple size={18} className="mr-2" />
+        {exporting ? "Exporting..." : "Export CSV"}
+      </Button>
+      {error && (
+        <p role="alert" className="text-sm text-red-700 mt-2">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
